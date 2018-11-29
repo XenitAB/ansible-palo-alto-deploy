@@ -1,0 +1,25 @@
+- name: Clear Interface Management Profiles for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/profiles/interface-management-profile"
+    command: delete
+
+- name: Create Interface Management Profile for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/profiles/interface-management-profile/entry[@name='{{ configuration.interfaceManagementProfile.name }}']"
+    element: "<http-ocsp>{{ configuration.interfaceManagementProfile.httpOcsp }}</http-ocsp>
+              <ping>{{ configuration.interfaceManagementProfile.ping }}</ping>
+              <http>{{ configuration.interfaceManagementProfile.http }}</http>
+              <https>{{ configuration.interfaceManagementProfile.https }}</https>
+              <ssh>{{ configuration.interfaceManagementProfile.ssh }}</ssh>
+              <snmp>{{ configuration.interfaceManagementProfile.snmp }}</snmp>
+              <userid-service>{{ configuration.interfaceManagementProfile.useridService }}</userid-service>
+              <userid-syslog-listener-ssl>{{ configuration.interfaceManagementProfile.useridSyslogListenerSsl }}</userid-syslog-listener-ssl>
+              <userid-syslog-listener-udp>{{ configuration.interfaceManagementProfile.useridSyslogListenerUdp }}</userid-syslog-listener-udp>
+              <response-pages>{{ configuration.interfaceManagementProfile.responsePages }}</response-pages>
+              <telnet>{{ configuration.interfaceManagementProfile.telnet }}</telnet>"

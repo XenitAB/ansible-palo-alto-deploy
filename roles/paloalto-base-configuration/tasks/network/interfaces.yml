@@ -1,0 +1,21 @@
+- name: Inlcude delete_ips.yml
+  include_tasks: delete_ips.yml
+  vars:
+    interfaceName: "{{ item }}"
+  loop:
+  - "{{ subnets[1].interfaceName }}"
+  - "{{ subnets[2].interfaceName }}"
+
+- name: Inlcude set_ips.yml
+  include_tasks: set_ips.yml
+
+- name: Set management profile on interfaces
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/interface/ethernet/entry[@name='{{ item }}']/layer3"
+    element: "<interface-management-profile>{{ configuration.interfaceManagementProfile.name }}</interface-management-profile>"
+  loop:
+  - "{{ subnets[1].interfaceName }}"
+  - "{{ subnets[2].interfaceName }}"

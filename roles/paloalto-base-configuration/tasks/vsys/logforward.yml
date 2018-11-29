@@ -1,0 +1,16 @@
+- name: Clear Log Forward Profiles for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/log-settings/profiles"
+    command: delete
+
+- name: Create Log Forward Profile {{ configuration.logForwarding.name }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/log-settings/profiles/entry[@name='{{ configuration.logForwarding.name }}']"
+    element: "<match-list></match-list>
+              <description>{{ configuration.logForwarding.description }}</description>"

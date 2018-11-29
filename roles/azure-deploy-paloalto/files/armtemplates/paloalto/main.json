@@ -1,0 +1,114 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "containerUri": {
+            "type": "string"
+        },
+        "containerSasToken": {
+            "type": "string"
+        },
+        "time": {
+            "type": "string"
+        },
+        "environmentShort": {
+            "type": "string"
+        },
+        "locationShort": {
+            "type": "string"
+        },
+        "vnetResourceGroupName": {
+            "type": "string"
+        },
+        "vnetName": {
+            "type": "string"
+        },
+        "subnets": {
+            "type": "array"
+        },
+        "commonNameShort": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "albPublicPorts": {
+            "type": "array"
+        },
+        "albInternalIps": {
+            "type": "array"
+        },
+        "albPublicPipCount": {
+            "type": "int"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "name": "[concat(parameters('commonNameShort'), padLeft(copyindex(1), 2, '0'),'_', parameters('time'))]",
+            "copy": {
+                "name": "vmLoop",
+                "count": 2,
+                "mode": "Serial",
+                "batchSize": 1
+            },
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/', parameters('time'), '/armtemplates/paloalto/paloalto.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "environmentShort": {
+                        "value": "[parameters('environmentShort')]"
+                    },
+                    "LocationShort": {
+                        "value": "[parameters('locationShort')]"
+                    },
+                    "vnetResourceGroupName": {
+                        "value": "[parameters('vnetResourceGroupName')]"
+                    },
+                    "vnetName": {
+                        "value": "[parameters('vnetName')]"
+                    },
+                    "subnets": {
+                        "value": "[parameters('subnets')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPassword')]"
+                    },
+                    "commonNameShort": {
+                        "value": "[parameters('commonNameShort')]"
+                    },
+                    "vmShortName": {
+                        "value": "[concat(parameters('commonNameShort'), padLeft(copyindex(1), 2, '0'))]"
+                    },
+                    "mainLoopCount": {
+                        "value": "[copyindex()]"
+                    },
+                    "availabilityZone": {
+                        "value": "[string(add(mod(copyIndex(),3),1))]"
+                    },
+                    "albPublicPorts": {
+                        "value": "[parameters('albPublicPorts')]"
+                    },
+                    "albInternalIps": {
+                        "value": "[parameters('albInternalIps')]"
+                    },
+                    "albPublicPipCount": {
+                        "value": "[parameters('albPublicPipCount')]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

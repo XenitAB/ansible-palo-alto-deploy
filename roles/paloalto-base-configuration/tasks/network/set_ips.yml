@@ -1,0 +1,25 @@
+- name: Inlcude set_interface_ip.yml for trust
+  include_tasks: set_interface_ip.yml
+  vars:
+    interfaceName: "{{ subnets[1].interfaceName }}"
+    ipAddress: "{{ subnets[1].ipAddresses[mainIndex] }}/{{ subnets[1].netmask }}"
+
+- name: Inlcude set_interface_ip.yml for trust (Azure LB)
+  include_tasks: set_interface_ip.yml
+  vars:
+    interfaceName: "{{ subnets[1].interfaceName }}"
+    ipAddress: "{{ item }}/32"
+  loop: "{{ albInternalIps }}"
+
+- name: Inlcude set_interface_ip.yml for untrust
+  include_tasks: set_interface_ip.yml
+  vars:
+    interfaceName: "{{ subnets[2].interfaceName }}"
+    ipAddress: "{{ subnets[2].ipAddresses[mainIndex] }}/{{ subnets[2].netmask }}"
+
+- name: Inlcude set_interface_ip.yml for untrust (Azure LB)
+  include_tasks: set_interface_ip.yml
+  vars:
+    interfaceName: "{{ subnets[2].interfaceName }}"
+    ipAddress: "{{ item }}/32"
+  loop: "{{ albPublicIps }}"

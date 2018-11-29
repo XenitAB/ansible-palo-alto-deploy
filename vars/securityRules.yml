@@ -1,0 +1,93 @@
+# Examples:
+#
+# securityRules:
+# -
+#   ruleName: testName1
+#   description: test description
+#   profileGroup: test-group
+#   logSetting: test-forwarding
+#   action: allow
+#   fromZones:
+#     - trust
+#     - untrust
+#   toZones:
+#     - trust
+#     - untrust
+#   sources:
+#     - 1.2.3.4
+#     - 4.3.2.1
+#   destinations:
+#     - 1.2.3.4
+#     - 4.3.2.1
+#   sourceUsers:
+#     - user1
+#     - user2
+#   categories:
+#     - news
+#     - travel
+#   applications:
+#     - web-browsing
+#     - ssl
+#   services:
+#     - service-http
+#     - service-https
+#   hipProfiles:
+#     - hipProfile1
+#     - hipProfile2
+#   tags:
+#     - tag1
+#     - tag2
+# -
+#   ruleName: testName2
+#   description: test description
+#   fromZones:
+#     - trust
+#   toZones:
+#     - untrust
+#   sources:
+#     - 10.0.0.0/24
+#   tags:
+#     - tag1
+#     - tag2
+
+securityRules:
+-
+  ruleName: "Allow service-http to PA from Azure ALB"
+  description: Allow Azure ALB to send health probe to Palo Alto Firewall on service-http
+  services:
+    - service-http
+  fromZone:
+    - "{{ configuration.zones.internalZone }}"
+    - "{{ configuration.zones.externalZone }}"
+  toZone:
+    - "{{ configuration.zones.internalZone }}"
+    - "{{ configuration.zones.externalZone }}"
+  sources:
+    - 168.63.129.16
+  destinations:
+    - "{{ subnets[1].ipAddresses[mainIndex] }}"
+    - "{{ subnets[2].ipAddresses[mainIndex] }}"
+-
+  ruleName: "Deny service-http to PA from everything"
+  description: Deny everything to use service-http to Palo Alto Firewall
+  services:
+    - service-http
+  destinations:
+    - "{{ subnets[1].ipAddresses[mainIndex] }}"
+    - "{{ subnets[2].ipAddresses[mainIndex] }}"
+  action: deny
+-
+  ruleName: "Deny unknown applications"
+  description: Default security rule to deny unknown applications
+  applications:
+    - unknown-tcp
+    - unknown-udp
+    - unknown-p2p
+  action: deny
+-
+  ruleName: "{{ configuration.zones.internalZone }}-to-{{ configuration.zones.externalZone }}"
+  description: Default security rule for {{ configuration.zones.internalZone }}-to-{{ configuration.zones.externalZone }}
+  fromZones:
+    - "{{ configuration.zones.internalZone }}"
+  toZones:
+    - "{{ configuration.zones.externalZone }}"

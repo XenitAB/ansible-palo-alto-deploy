@@ -1,0 +1,145 @@
+{% if item.fromZones is defined %}
+<from>
+{% for fromZone in item.fromZones %}
+	<member>{{ fromZone }}</member>
+{% endfor %}
+</from>
+{% else %}
+<from>
+	<member>any</member>
+</from>
+{% endif %}
+
+{% if item.toZones is defined %}
+<to>
+{% for toZone in item.toZones %}
+	<member>{{ toZone }}</member>
+{% endfor %}
+</to>
+{% else %}
+<to>
+	<member>any</member>
+</to>
+{% endif %}
+
+{% if item.sources is defined %}
+<source>
+{% for source in item.sources %}
+	<member>{{ source }}</member>
+{% endfor %}
+</source>
+{% else %}
+<source>
+	<member>any</member>
+</source>
+{% endif %}
+
+{% if item.destinations is defined %}
+<destination>
+{% for destination in item.destinations %}
+	<member>{{ destination }}</member>
+{% endfor %}
+</destination>
+{% else %}
+<destination>
+	<member>any</member>
+</destination>
+{% endif %}
+
+{% if item.sourceUsers is defined %}
+<source-user>
+{% for sourceUser in item.sourceUsers %}
+	<member>{{ sourceUser }}</member>
+{% endfor %}
+</source-user>
+{% else %}
+<source-user>
+	<member>any</member>
+</source-user>
+{% endif %}
+
+{% if item.categories is defined %}
+<category>
+{% for category in item.categories %}
+	<member>{{ category }}</member>
+{% endfor %}
+</category>
+{% else %}
+<category>
+	<member>any</member>
+</category>
+{% endif %}
+
+{% if item.applications is defined %}
+<application>
+{% for application in item.applications %}
+	<member>{{ application }}</member>
+{% endfor %}
+</application>
+{% else %}
+<application>
+	<member>any</member>
+</application>
+{% endif %}
+
+{% if item.services is defined %}
+<service>
+{% for service in item.services %}
+	<member>{{ service }}</member>
+{% endfor %}
+</service>
+{% else %}
+<service>
+	<member>application-default</member>
+</service>
+{% endif %}
+
+{% if item.hipProfiles is defined %}
+<hip-profiles>
+{% for hipProfile in item.hipProfiles %}
+	<member>{{ hipProfile }}</member>
+{% endfor %}
+</hip-profiles>
+{% else %}
+<hip-profiles>
+	<member>any</member>
+</hip-profiles>
+{% endif %}
+
+{% if item.tags is defined %}
+<tag>
+{% for tag in item.tags %}
+	<member>{{ tag }}</member>
+{% endfor %}
+</tag>
+{% endif %}
+
+{% if item.action is defined %}
+<action>{{ item.action }}</action>
+{% else %}
+<action>allow</action>
+{% endif %}
+
+{% if item.description is defined %}
+<description>{{ item.description }}</description>
+{% endif %}
+
+{% if item.logSetting is defined %}
+<log-setting>{{ item.logSetting }}</log-setting>
+{% else %}
+<log-setting>{{ configuration.logForwarding.name }}</log-setting>
+{% endif %}
+
+{% if item.profileGroup is defined %}
+<profile-setting>
+	<group>
+		<member>{{ item.profileGroup }}</member>
+	</group>
+</profile-setting>
+{% else %}
+<profile-setting>
+	<group>
+		<member>{{ configuration.securityProfileGroup.name }}</member>
+	</group>
+</profile-setting>
+{% endif %}

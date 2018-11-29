@@ -1,0 +1,110 @@
+- name: Include vars from {{ environmentShort }}.yml
+  include_vars: "{{ environmentShort }}.yml"
+
+- name: Set fact for playbook
+  set_fact:
+    paManagementIps:
+    - "{{ subnets[0].ipAddresses[0] }}"
+    - "{{ subnets[0].ipAddresses[1] }}"
+    albPublicIps: "{{ publicIpAddresses }}"
+
+- name: Wait for contact
+  panos_check:
+    ip_address: "{{ item }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+  register: result
+  until: not result is failed
+  retries: 60
+  delay: 10
+  loop: "{{ paManagementIps }}"
+
+- name: Include Interface Profile management task
+  include_tasks: network/interfacemgmtprofile.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include Network Interface management task
+  include_tasks: network/interfaces.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include dns proxy task
+  include_tasks: network/dnsproxy.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include device configuration management task
+  include_tasks: device/deviceconfig.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include system management task
+  include_tasks: device/management.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include Virtual Router management task
+  include_tasks: network/virtualrouter.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include Zone management task
+  include_tasks: vsys/zone.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include Panorama management task
+  include_tasks: device/panorama.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+
+- name: Include Log Forwarding profile management task
+  include_tasks: vsys/logforward.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include Security Profile Group profile management task
+  include_tasks: vsys/securityprofilegroup.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include Security Policy management task
+  include_tasks: vsys/securityrule.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Include NAT Policy management task
+  include_tasks: vsys/natrule.yml
+  loop: "{{ paManagementIps }}"
+  loop_control:
+    loop_var: mainItem
+    index_var: mainIndex
+
+- name: Commit changes
+  panos_commit:
+      ip_address: "{{ item }}"
+      username: "{{ adminUsername }}"
+      password: "{{ adminPassword }}"
+  loop: "{{ paManagementIps }}"

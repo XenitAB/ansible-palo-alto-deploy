@@ -1,0 +1,43 @@
+- name: Include vars from staticDnsEntries.yml
+  include_vars: "staticDnsEntries.yml"
+
+- name: Clear DNS Proxies for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/dns-proxy"
+    command: delete
+
+- name: Create DNS Proxy for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/dns-proxy/entry[@name='{{ configuration.dnsProxy.name }}']"
+    element: "<cache>
+                <max-ttl>
+                  <enabled>{{ configuration.dnsProxy.cacheMaxTtlEnabled }}</enabled>
+                  <time-to-live>{{ configuration.dnsProxy.cacheMaxTtl }}</time-to-live>
+                </max-ttl>
+                <enabled>{{ configuration.dnsProxy.cacheEnabled }}</enabled>
+              </cache>
+              <default>
+                <primary>{{ configuration.dnsProxy.primary }}</primary>
+                <secondary>{{ configuration.dnsProxy.secondary }}</secondary>
+              </default>
+              <tcp-queries>
+                <enabled>{{ configuration.dnsProxy.tcpQueriesEnabled }}</enabled>
+              </tcp-queries>
+              <interface>
+                <member>{{ subnets[1].interfaceName }}</member>
+              </interface>"
+
+- name: Create DNS Proxy static entries for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/dns-proxy/entry[@name='{{ configuration.dnsProxy.name }}']/static-entries/entry[@name='{{ item.fqdn }}']"
+    element: "{{ lookup('template', 'staticDnsEntry.xml.j2') }}"
+  loop: "{{ staticDnsEntries }}"

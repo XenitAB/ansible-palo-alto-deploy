@@ -1,0 +1,79 @@
+# Examples:
+#
+# staticRoutes:
+# -
+#   vrName: "{{ configuration.virtualRouters.internalRouter }}"
+#   routeName: Azure ALB Probes
+#   interfaceName: "{{ subnets[1].interfaceName }}"
+#   nextHop: "{{ subnets[1].gateway }}"
+#   destination: 168.63.129.16/32
+#   metric: 10
+# -
+#   vrName: "{{ configuration.virtualRouters.externalRouter }}"
+#   routeName: Internal-03
+#   interfaceName: "{{ subnets[2].interfaceName }}"
+#   nextHopVr: "{{ configuration.virtualRouters.internalRouter }}"
+#   destination: 192.168.0.0/16
+#   metric: 10
+
+staticRoutes:
+-
+  vrName: "{{ configuration.virtualRouters.internalRouter }}"
+  routeName: Azure ALB Probes
+  interfaceName: "{{ subnets[1].interfaceName }}"
+  nextHop: "{{ subnets[1].gateway }}"
+  destination: 168.63.129.16/32
+-
+  vrName: "{{ configuration.virtualRouters.internalRouter }}"
+  routeName: Internal-01
+  interfaceName: "{{ subnets[1].interfaceName }}"
+  nextHop: "{{ subnets[1].gateway }}"
+  destination: 10.0.0.0/8
+-
+  vrName: "{{ configuration.virtualRouters.internalRouter }}"
+  routeName: Internal-02
+  interfaceName: "{{ subnets[1].interfaceName }}"
+  nextHop: "{{ subnets[1].gateway }}"
+  destination: 172.16.0.0/12
+-
+  vrName: "{{ configuration.virtualRouters.internalRouter }}"
+  routeName: Internal-03
+  interfaceName: "{{ subnets[1].interfaceName }}"
+  nextHop: "{{ subnets[1].gateway }}"
+  destination: 192.168.0.0/16
+-
+  vrName: "{{ configuration.virtualRouters.internalRouter }}"
+  routeName: Default
+  interfaceName: "{{ subnets[1].interfaceName }}"
+  nextHopVr: "{{ configuration.virtualRouters.externalRouter }}"
+  destination: 0.0.0.0/0
+-
+  vrName: "{{ configuration.virtualRouters.externalRouter }}"
+  routeName: Azure ALB Probes
+  interfaceName: "{{ subnets[2].interfaceName }}"
+  nextHop: "{{ subnets[2].gateway }}"
+  destination: 168.63.129.16/32
+-
+  vrName: "{{ configuration.virtualRouters.externalRouter }}"
+  routeName: Default
+  interfaceName: "{{ subnets[2].interfaceName }}"
+  nextHop: "{{ subnets[2].gateway }}"
+  destination: 0.0.0.0/0
+-
+  vrName: "{{ configuration.virtualRouters.externalRouter }}"
+  routeName: Internal-01
+  interfaceName: "{{ subnets[2].interfaceName }}"
+  nextHopVr: "{{ configuration.virtualRouters.internalRouter }}"
+  destination: 10.0.0.0/8
+-
+  vrName: "{{ configuration.virtualRouters.externalRouter }}"
+  routeName: Internal-02
+  interfaceName: "{{ subnets[2].interfaceName }}"
+  nextHopVr: "{{ configuration.virtualRouters.internalRouter }}"
+  destination: 172.16.0.0/12
+-
+  vrName: "{{ configuration.virtualRouters.externalRouter }}"
+  routeName: Internal-03
+  interfaceName: "{{ subnets[2].interfaceName }}"
+  nextHopVr: "{{ configuration.virtualRouters.internalRouter }}"
+  destination: 192.168.0.0/16

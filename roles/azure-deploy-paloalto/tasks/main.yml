@@ -1,0 +1,129 @@
+- name: Include vars from {{ environmentShort }}.yml
+  include_vars: "{{ environmentShort }}.yml"
+
+- name: Fail if variables not set
+  assert:
+    that:
+      - adminPassword != ""
+
+- name: Set playbook facts
+  set_fact:
+    time: "{{ ansible_date_time.iso8601_basic_short }}"
+    timeExpiry: "{{ '%Y-%m-%d' | strftime( ( ansible_date_time.epoch | int ) + ( 86400 * 3 )  ) }}"
+    resourceGroupName: "rg-{{ environmentShort }}-{{ locationShort }}-{{ rgCommonName }}"
+    storageAccountName: "strg{{ environmentShort }}{{ locationShort }}{{ rgCommonName }}"
+    storageContainerName: "ansible"
+
+- name: Create Azure resource group ({{ resourceGroupName }})
+  azure_rm_resourcegroup:
+     name: "{{ resourceGroupName }}"
+     location: "{{ location }}"
+
+- name: Create Azure storage account ({{ storageAccountName }})
+  azure_rm_storageaccount:
+    resource_group: "{{ resourceGroupName }}"
+    name: "{{ storageAccountName }}"
+    type: Standard_RAGRS
+  register: storageAccount
+
+- name: Find files in ./roles/azure-deploy-paloalto/files
+  find:
+    paths: ./roles/azure-deploy-paloalto/files
+    recurse: yes
+    file_type: file
+  register: files
+
+- name: Create container ({{ storageContainerName }}) and upload files from ./roles/azure-deploy-paloalto/files
+  azure_rm_storageblob:
+    resource_group: "{{ resourceGroupName }}"
+    storage_account_name: "{{ storageAccountName }}"
+    container: "{{ storageContainerName }}"
+    blob: "{{ time }}/{{ item.path | regex_replace('^roles/azure-deploy-paloalto/files/(.*)', '\\1') }}"
+    src: "{{ item.path }}"
+  with_items: "{{ files.files }}"
+
+- name: Get Azure storage account keys
+  azure_rm_resource:
+    resource_group: "{{ resourceGroupName }}"
+    provider: storage
+    resource_type: storageAccounts
+    resource_name: "{{ storageAccountName }}/ListAccountSas"
+    api_version: "2018-03-01-preview"
+    method: POST
+    body:
+      signedServices: "b"
+      signedResourceTypes: "o"
+      signedPermission: "r"
+      signedProtocol: "https"
+      signedExpiry: "{{ timeExpiry }}"
+  register: storageAccountSas
+
+- name: Set Azure storage account facts
+  set_fact:
+    storageUri: "{{ storageAccount.state.primary_endpoints.blob }}"
+    storageSasToken: "{{ storageAccountSas.response.accountSasToken  }}"
+
+- name: Set ARM Template deployment name
+  set_fact:
+    deploymentName: "{{ commonName }}-main_{{ time }}"
+
+- name: Create azure deploy ({{ deploymentName }})
+  azure_rm_deployment:
+    state: present
+    resource_group_name: "{{ resourceGroupName }}"
+    location: "{{ location }}"
+    deployment_name: "{{ deploymentName }}"
+    template_link: "{{ storageUri }}{{ storageContainerName }}/{{ time }}/armtemplates/paloalto/main.json?{{ storageSasToken }}"
+    parameters:
+      containerUri:
+        value: "{{ storageUri }}{{ storageContainerName }}"
+      containerSasToken:
+        value: "?{{ storageSasToken }}"
+      time:
+        value: "{{ time }}"
+      environmentShort:
+        value: "{{ environmentShort }}"
+      locationShort:
+        value: "{{ locationShort }}"
+      vnetResourceGroupName:
+        value: "{{ vnetResourceGroupName }}"
+      vnetName:
+        value: "{{ vnetName }}"
+      subnets:
+        value: "{{ subnets }}"
+      commonNameShort:
+        value: "{{ commonNameShort }}"
+      adminUsername:
+        value: "{{ adminUsername }}"
+      adminPassword:
+        value: "{{ adminPassword }}"
+      albPublicPorts:
+        value: "{{ albPublicPorts }}"
+      albInternalIps:
+        value: "{{ albInternalIps }}"
+      albPublicPipCount:
+        value: "{{ albPublicPipCount }}"
+  register: mainDeployment
+
+- name: Get Public IP addresses
+  azure_rm_resource:
+    resource_group: "{{ resourceGroupName }}"
+    provider: network
+    resource_type: publicIPAddresses
+    resource_name: "pip-alb-{{ environmentShort }}-{{ locationShort }}-{{ commonNameShort }}-public-{{ item }}"
+    api_version: "2018-07-01"
+    method: GET
+  with_sequence: start=1 end={{ albPublicPipCount }} format=%02x
+  register: registerPips
+
+- name: Set fact for public IP addresses
+  set_fact:
+    publicIpAddresses: "{{ publicIpAddresses | default([]) + [ item.response.properties.ipAddress ] }}"
+  loop: "{{ registerPips.results }}"
+
+- name: Set fact for vmNames
+  set_fact:
+    vmNames: "{{ (vmNames | default([])) + [ vmName ] }}"
+  vars:
+    vmName: "vm-{{ environmentShort }}-{{ locationShort }}-{{ commonNameShort }}{{ item }}"
+  with_sequence: start=1 end=2 format=%02x

@@ -1,0 +1,26 @@
+# Example:
+#
+# sourceNatRules:
+# -
+#   ruleName: test-snat
+#   description: default snat rule
+#   snatInterfaceName: ethernet1/2
+#   snatInterfaceIp: 10.100.249.4/24
+#   service: service-http
+#   fromZones:
+#     - trust
+#   toZone: untrust
+#   sources:
+#     - 4.5.6.7
+#   destinations:
+#     - 1.2.3.4
+
+sourceNatRules:
+-
+  ruleName: "SNAT-{{ configuration.zones.internalZone }}-to-{{ configuration.zones.externalZone }}"
+  description: "Default Source NAT rule for traffic from {{ configuration.zones.internalZone }} to {{ configuration.zones.externalZone }}"
+  snatInterfaceName: "{{ subnets[2].interfaceName }}"
+  snatInterfaceIp: "{{ subnets[2].ipAddresses[mainIndex] }}/{{ subnets[2].netmask }}"
+  fromZones:
+    - "{{ configuration.zones.internalZone }}"
+  toZone: "{{ configuration.zones.externalZone }}"

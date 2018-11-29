@@ -1,0 +1,101 @@
+- name: Clear virtual routers for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/virtual-router"
+    command: delete
+
+- name: Create Virtual Router {{ configuration.virtualRouters.internalRouter }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='{{ configuration.virtualRouters.internalRouter }}']"
+    element: "<ecmp>
+                  <algorithm>
+                      <ip-modulo/>
+                  </algorithm>
+              </ecmp>
+              <protocol>
+                  <bgp>
+                      <routing-options>
+                          <graceful-restart>
+                              <enable>{{ configuration.virtualRouters.bgpGracefulRestart }}</enable>
+                          </graceful-restart>
+                      </routing-options>
+                      <enable>{{ configuration.virtualRouters.bgpEnabled }}</enable>
+                  </bgp>
+                  <rip>
+                      <enable>{{ configuration.virtualRouters.ripEnabled }}</enable>
+                  </rip>
+                  <ospf>
+                      <enable>{{ configuration.virtualRouters.ospfEnabled }}</enable>
+                  </ospf>
+                  <ospfv3>
+                      <enable>{{ configuration.virtualRouters.ospfv3Enabled }}</enable>
+                  </ospfv3>
+              </protocol>"
+
+- name: Create Virtual Router {{ configuration.virtualRouters.externalRouter }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='{{ configuration.virtualRouters.externalRouter }}']"
+    element: "<ecmp>
+                  <algorithm>
+                      <ip-modulo/>
+                  </algorithm>
+              </ecmp>
+              <protocol>
+                  <bgp>
+                      <routing-options>
+                          <graceful-restart>
+                              <enable>{{ configuration.virtualRouters.bgpGracefulRestart }}</enable>
+                          </graceful-restart>
+                      </routing-options>
+                      <enable>{{ configuration.virtualRouters.bgpEnabled }}</enable>
+                  </bgp>
+                  <rip>
+                      <enable>{{ configuration.virtualRouters.ripEnabled }}</enable>
+                  </rip>
+                  <ospf>
+                      <enable>{{ configuration.virtualRouters.ospfEnabled }}</enable>
+                  </ospf>
+                  <ospfv3>
+                      <enable>{{ configuration.virtualRouters.ospfv3Enabled }}</enable>
+                  </ospfv3>
+              </protocol>"
+
+- name: Create add interface {{ subnets[1].interfaceName }} to virtual router {{ configuration.virtualRouters.internalRouter }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='{{ configuration.virtualRouters.internalRouter }}']"
+    element: "<interface>
+                <member>{{ subnets[1].interfaceName }}</member>
+              </interface>"
+
+- name: Create add interface {{ subnets[2].interfaceName }} to virtual router {{ configuration.virtualRouters.externalRouter }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='{{ configuration.virtualRouters.externalRouter }}']"
+    element: "<interface>
+                <member>{{ subnets[2].interfaceName }}</member>
+              </interface>"
+
+- name: Include vars from staticRoutes.yml
+  include_vars: "staticRoutes.yml"
+
+- name: Add static routes for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='{{ item.vrName }}']/routing-table/ip/static-route/entry[@name='{{ item.routeName }}']"
+    element: "{{ lookup('template', 'staticRoute.xml.j2') }}"
+  loop: "{{ staticRoutes }}"

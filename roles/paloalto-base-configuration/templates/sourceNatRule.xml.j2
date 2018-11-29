@@ -1,0 +1,44 @@
+<source-translation>
+	<dynamic-ip-and-port>
+		<interface-address>
+			<ip>{{ item.snatInterfaceIp }}</ip>
+			<interface>{{ item.snatInterfaceName }}</interface>
+		</interface-address>
+	</dynamic-ip-and-port>
+</source-translation>
+
+<to>
+	<member>{{ item.toZone }}</member>
+</to>
+
+<from>
+{% for fromZone in item.fromZones %}
+	<member>{{ fromZone }}</member>
+{% endfor %}
+</from>
+
+<source>
+{% if item.sources is defined %}
+{% for source in item.sources %}
+	<member>{{ source }}</member>
+{% endfor %}
+{% else %}
+	<member>any</member>
+{% endif %}
+</source>
+
+<destination>
+{% if item.destinations is defined %}
+{% for destination in item.destinations %}
+	<member>{{ destination }}</member>
+{% endfor %}
+{% else %}
+	<member>any</member>
+{% endif %}
+</destination>
+
+<service>{% if item.service is defined %}{{ item.service }}{% else %}any{% endif %}</service>
+
+{% if item.description is defined %}
+<description>{{ item.description }}</description>
+{% endif %}

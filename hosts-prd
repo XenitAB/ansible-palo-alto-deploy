@@ -1,0 +1,26 @@
+[all]
+localhost ansible_connection=local
+
+[azure:children]
+azure-dev
+azure-qa
+azure-prd
+
+[azure-dev]
+
+[azure-qa]
+
+[azure-prd]
+localhost
+
+[paloalto:children]
+paloalto-dev
+paloalto-qa
+paloalto-prd
+
+[paloalto-dev]
+
+[paloalto-qa]
+
+[paloalto-prd]
+localhost

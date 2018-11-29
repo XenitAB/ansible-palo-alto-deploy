@@ -1,0 +1,7 @@
+- name: Delete interface IP for {{ mainItem }} {{ interfaceName }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/interface/ethernet/entry[@name='{{ interfaceName }}']/layer3/ip"
+    command: delete

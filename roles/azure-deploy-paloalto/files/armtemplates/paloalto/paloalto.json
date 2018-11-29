@@ -1,0 +1,491 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "EnvironmentShort": {
+            "type": "string"
+        },
+        "LocationShort": {
+            "type": "string"
+        },
+        "vnetResourceGroupName": {
+            "type": "string"
+        },
+        "vnetName": {
+            "type": "string"
+        },
+        "subnets": {
+            "type": "array"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "commonNameShort": {
+            "type": "string"
+        },
+        "vmShortName": {
+            "type": "string"
+        },
+        "mainLoopCount": {
+            "type": "int"
+        },
+        "availabilityZone": {
+            "type": "string"
+        },
+        "albPublicPorts": {
+            "type": "array"
+        },
+        "albInternalIps": {
+            "type": "array"
+        },
+        "albPublicPipCount": {
+            "type": "int"
+        }
+    },
+    "variables": {
+        "envLocation": "[concat(parameters('EnvironmentShort'), '-', parameters('LocationShort'))]",
+        "vmName": "[concat('vm-', variables('envLocation'), '-', parameters('vmShortName'))]",
+        "osDisk1Name": "[concat('osdisk-', variables('vmName'))]",
+        "albInternalName": "[concat('alb-', variables('envLocation'), '-', parameters('commonNameShort'), '-internal')]",
+        "albPublicName": "[concat('alb-', variables('envLocation'), '-', parameters('commonNameShort'), '-public')]",
+        "hubVnetId": "[resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+        "vmSubnets": [
+            {
+                "subnetId": "[concat(variables('hubVnetId'), '/subnets/', parameters('subnets')[0].name)]",
+                "ipAddresses": "[parameters('subnets')[0].ipAddresses]"
+            },
+            {
+                "subnetId": "[concat(variables('hubVnetId'), '/subnets/', parameters('subnets')[1].name)]",
+                "ipAddresses": "[parameters('subnets')[1].ipAddresses]"
+            },
+            {
+                "subnetId": "[concat(variables('hubVnetId'), '/subnets/', parameters('subnets')[2].name)]",
+                "ipAddresses": "[parameters('subnets')[2].ipAddresses]"
+            }
+        ],
+        "albInternalId": "[resourceId('Microsoft.Network/loadBalancers', variables('albInternalName'))]",
+        "albInternalBePoolName": "[concat('be-', variables('albInternalName'))]",
+        "albInternalBePool": "[concat(variables('albInternalId'), '/backendAddressPools/', variables('albInternalBePoolName'))]",
+        "albPublicId": "[resourceId('Microsoft.Network/loadBalancers', variables('albPublicName'))]",
+        "albPublicBePoolName": "[concat('be-', variables('albPublicName'))]",
+        "albPublicBePool": "[concat(variables('albPublicId'), '/backendAddressPools/', variables('albPublicBePoolName'))]",
+        "nsgNamePublic": "[concat('nsg-', variables('envLocation'), '-', parameters('commonNameShort'), '-public')]",
+        "nsgNameMgmt": "[concat('nsg-', variables('envLocation'), '-', parameters('commonNameShort'), '-mgmt')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat('nic-', variables('vmName'), '-01')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('vmSubnets')[0].ipAddresses[parameters('mainLoopCount')]]",
+                            "privateIPAllocationMethod": "Static",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('pip-', variables('vmName'), '-mgmt'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('vmSubnets')[0].subnetId]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": false,
+                "primary": true,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgNameMgmt'))]"
+                }
+            },
+            "dependsOn": [
+                "[concat('pip-', variables('vmName'), '-mgmt')]",
+                "[variables('nsgNameMgmt')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat('nic-', variables('vmName'), '-02')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('vmSubnets')[1].ipAddresses[parameters('mainLoopCount')]]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[variables('vmSubnets')[1].subnetId]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('albInternalBePool')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": true,
+                "primary": false
+            },
+            "dependsOn": [
+                "[concat('nic-', variables('vmName'), '-01')]",
+                "[variables('albInternalName')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat('nic-', variables('vmName'), '-03')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('vmSubnets')[2].ipAddresses[parameters('mainLoopCount')]]",
+                            "privateIPAllocationMethod": "Static",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('pip-', variables('vmName'), '-outside'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('vmSubnets')[2].subnetId]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('albPublicBePool')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "enableAcceleratedNetworking": false,
+                "enableIPForwarding": true,
+                "primary": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgNamePublic'))]"
+                }
+            },
+            "dependsOn": [
+                "[concat('nic-', variables('vmName'), '-02')]",
+                "[concat('pip-', variables('vmName'), '-outside')]",
+                "[variables('albPublicName')]",
+                "[variables('nsgNamePublic')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "name": "[concat('pip-', variables('vmName'), '-mgmt')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "name": "[concat('pip-', variables('vmName'), '-outside')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            },
+            "dependsOn": []
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "condition": "[if(equals(parameters('mainLoopCount'), 0), bool('true'), bool('false'))]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('nsgNameMgmt')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "condition": "[if(equals(parameters('mainLoopCount'), 0), bool('true'), bool('false'))]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('nsgNamePublic')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "Allow_any",
+                        "properties": {
+                            "description": "Allow any to NetScaler Outside",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName')]",
+            "apiVersion": "2017-12-01",
+            "location": "[resourceGroup().location]",
+            "zones": [
+                "[parameters('availabilityZone')]"
+            ],
+            "plan": {
+                "name": "byol",
+                "product": "vmseries1",
+                "publisher": "paloaltonetworks"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS3_v2"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "paloaltonetworks",
+                        "offer": "vmseries1",
+                        "sku": "byol",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[variables('osDisk1Name')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "copy": [
+                        {
+                            "name": "networkInterfaces",
+                            "count": "[length(variables('vmSubnets'))]",
+                            "input": {
+                                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-', variables('vmName'), '-', padLeft(copyindex('networkInterfaces', 1), 2, '0')))]",
+                                "properties": {
+                                    "primary": "[if(equals(copyIndex('networkInterfaces'), 0), bool('true'), bool('false'))]"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat('nic-', variables('vmName'), '-01')]",
+                "[concat('nic-', variables('vmName'), '-02')]",
+                "[concat('nic-', variables('vmName'), '-03')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "condition": "[if(equals(parameters('mainLoopCount'), 0), bool('true'), bool('false'))]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "name": "[variables('albInternalName')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "copy": [
+                    {
+                        "name": "frontendIPConfigurations",
+                        "count": "[length(parameters('albInternalIps'))]",
+                        "input": {
+                            "name": "[concat('fe-', variables('albInternalName'),'-', padLeft(copyindex('frontendIPConfigurations', 1), 2, '0'))]",
+                            "properties": {
+                                "privateIPAddress": "[parameters('albInternalIps')[copyindex('frontendIPConfigurations')]]",
+                                "privateIPAllocationMethod": "Static",
+                                "subnet": {
+                                    "id": "[variables('vmSubnets')[1].subnetId]"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "loadBalancingRules",
+                        "count": "[length(parameters('albInternalIps'))]",
+                        "input": {
+                            "name": "[concat('lbr-', variables('albInternalName'),'-', padLeft(copyindex('loadBalancingRules', 1), 2, '0'))]",
+                            "properties": {
+                                "frontendIPConfiguration": {
+                                    "id": "[concat(variables('albInternalId'), '/frontendIPConfigurations/', 'fe-', variables('albInternalName'),'-', padLeft(copyindex('loadBalancingRules', 1), 2, '0'))]"
+                                },
+                                "frontendPort": 0,
+                                "backendPort": 0,
+                                "enableFloatingIP": true,
+                                "idleTimeoutInMinutes": 4,
+                                "protocol": "All",
+                                "loadDistribution": "sourceIP",
+                                "disableOutboundSnat": false,
+                                "backendAddressPool": {
+                                    "id": "[variables('albInternalBePool')]"
+                                },
+                                "probe": {
+                                    "id": "[concat(variables('albInternalId'), '/probes/', 'hp-', variables('albInternalName'))]"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('albInternalBePoolName')]"
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[concat('hp-', variables('albInternalName'))]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 80,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "inboundNatRules": [],
+                "inboundNatPools": []
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "condition": "[if(equals(parameters('mainLoopCount'), 0), bool('true'), bool('false'))]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "name": "[variables('albPublicName')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "copy": [
+                    {
+                        "name": "frontendIPConfigurations",
+                        "count": "[parameters('albPublicPipCount')]",
+                        "input": {
+                            "name": "[concat('fe-', variables('albPublicName'),'-', padLeft(copyindex('frontendIPConfigurations', 1), 2, '0'))]",
+                            "properties": {
+                                "privateIPAllocationMethod": "Dynamic",
+                                "publicIPAddress": {
+                                    "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('pip-', variables('albPublicName'), '-', padLeft(copyindex('frontendIPConfigurations', 1), 2, '0')))]"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "loadBalancingRules",
+                        "count": "[mul(parameters('albPublicPipCount'), length(parameters('albPublicPorts')))]",
+                        "input": {
+                            "name": "[concat('lbr-', variables('albPublicName'),'-', padLeft(add(div(sub(copyIndex('loadBalancingRules'),mod(copyIndex('loadBalancingRules'),length(parameters('albPublicPorts')))),length(parameters('albPublicPorts'))),1), 2, '0'), '_', parameters('albPublicPorts')[mod(copyIndex('loadBalancingRules'), length(parameters('albPublicPorts')))])]",
+                            "properties": {
+                                "frontendIPConfiguration": {
+                                    "id": "[concat(variables('albPublicId'), '/frontendIPConfigurations/', 'fe-', variables('albPublicName'),'-', padLeft(add(div(sub(copyIndex('loadBalancingRules'),mod(copyIndex('loadBalancingRules'),length(parameters('albPublicPorts')))),length(parameters('albPublicPorts'))),1), 2, '0'))]"
+                                },
+                                "frontendPort": "[parameters('albPublicPorts')[mod(copyIndex('loadBalancingRules'), length(parameters('albPublicPorts')))]]",
+                                "backendPort": "[parameters('albPublicPorts')[mod(copyIndex('loadBalancingRules'), length(parameters('albPublicPorts')))]]",
+                                "enableFloatingIP": true,
+                                "idleTimeoutInMinutes": 4,
+                                "protocol": "Tcp",
+                                "loadDistribution": "sourceIP",
+                                "disableOutboundSnat": false,
+                                "backendAddressPool": {
+                                    "id": "[variables('albPublicBePool')]"
+                                },
+                                "probe": {
+                                    "id": "[concat(variables('albPublicId'), '/probes/', 'hp-', variables('albPublicName'))]"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('albPublicBePoolName')]"
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[concat('hp-', variables('albPublicName'))]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 80,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "inboundNatRules": [],
+                "inboundNatPools": []
+            },
+            "dependsOn": [
+                "pipAlbLoop"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "condition": "[if(equals(parameters('mainLoopCount'), 0), bool('true'), bool('false'))]",
+            "copy": {
+                "name": "pipAlbLoop",
+                "count": "[parameters('albPublicPipCount')]"
+            },
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "name": "[concat('pip-', variables('albPublicName'), '-', padLeft(copyindex('pipAlbLoop', 1), 2, '0'))]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            },
+            "dependsOn": []
+        }
+    ]
+}

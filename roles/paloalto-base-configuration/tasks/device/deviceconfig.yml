@@ -1,0 +1,171 @@
+- name: Clear device configuration (system) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    command: delete
+
+- name: Configure hostname for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<hostname>{{ vmNames[mainIndex] }}</hostname>"
+
+- name: Configure timezone for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<timezone>{{ configuration.deviceconfig.system.timezone }}</timezone>"
+
+- name: Configure login banner for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<login-banner>{{ configuration.deviceconfig.system.banner }}</login-banner>"
+
+- name: Configure geolocation for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<geo-location><latitude>{{ configuration.deviceconfig.system.latitude }}</latitude><longitude>{{ configuration.deviceconfig.system.longitude }}</longitude></geo-location>"
+
+- name: Configure management services for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<service>
+                <disable-http>{{ configuration.deviceconfig.system.services.disableHttp }}</disable-http>
+                <disable-http-ocsp>{{ configuration.deviceconfig.system.services.disableHttpOcsp }}</disable-http-ocsp>
+                <disable-https>{{ configuration.deviceconfig.system.services.disableHttps }}</disable-https>
+                <disable-icmp>{{ configuration.deviceconfig.system.services.disableIcmp }}</disable-icmp>
+                <disable-snmp>{{ configuration.deviceconfig.system.services.disableSnmp }}</disable-snmp>
+                <disable-ssh>{{ configuration.deviceconfig.system.services.disableSsh }}</disable-ssh>
+                <disable-telnet>{{ configuration.deviceconfig.system.services.disableTelnet }}</disable-telnet>
+                <disable-userid-service>{{ configuration.deviceconfig.system.services.disableUseridService }}</disable-userid-service>
+                <disable-userid-syslog-listener-ssl>{{ configuration.deviceconfig.system.services.disableUseridSyslogListenerSsl }}</disable-userid-syslog-listener-ssl>
+                <disable-userid-syslog-listener-udp>{{ configuration.deviceconfig.system.services.disableUseridSyslogListenerUdp }}</disable-userid-syslog-listener-udp>
+              </service>"
+
+- name: Configure SNMP settings for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<snmp-setting>
+                <access-setting>
+                  <version>
+                    <v2c>
+                      <snmp-community-string>{{ configuration.deviceconfig.system.snmp.community }}</snmp-community-string>
+                    </v2c>
+                  </version>
+                </access-setting>
+                <snmp-system>
+                  <location>{{ configuration.deviceconfig.system.snmp.location }}</location>
+                  <contact>{{ configuration.deviceconfig.system.snmp.contact }}</contact>
+                </snmp-system>
+              </snmp-setting>"
+
+- name: Configure NTP settings for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<ntp-servers>
+                <primary-ntp-server>
+                  <authentication-type><none/></authentication-type>
+                  <ntp-server-address>{{ configuration.deviceconfig.system.ntp.primary }}</ntp-server-address>
+                </primary-ntp-server>
+                <secondary-ntp-server>
+                  <authentication-type><none/></authentication-type>
+                  <ntp-server-address>{{ configuration.deviceconfig.system.ntp.secondary }}</ntp-server-address>
+                </secondary-ntp-server>
+              </ntp-servers>"
+
+- name: Configure DNS settings for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system"
+    element: "<dns-setting>
+                <dns-proxy-object>{{ configuration.dnsProxy.name }}</dns-proxy-object>
+              </dns-setting>"
+
+- name: Configure update schedule (threats) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/update-schedule/threats"
+    element: "<recurring>
+                <every-30-mins>
+                  <at>0</at>
+                  <action>{{ configuration.deviceconfig.system.updateSchedule.threats.action }}</action>
+                </every-30-mins>
+                <threshold>{{ configuration.deviceconfig.system.updateSchedule.threats.threshold }}</threshold>
+              </recurring>"
+
+- name: Configure update schedule (global-protect-clientless-vpn) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/update-schedule/global-protect-clientless-vpn"
+    element: "<recurring>
+                <daily>
+                  <at>{{ configuration.deviceconfig.system.updateSchedule.globalProtectClientlessVpn.at }}</at>
+                  <action>{{ configuration.deviceconfig.system.updateSchedule.globalProtectClientlessVpn.action }}</action>
+                </daily>
+              </recurring>"
+
+- name: Configure update schedule (global-protect-datafile) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/update-schedule/global-protect-datafile"
+    element: "<recurring>
+                <daily>
+                  <at>{{ configuration.deviceconfig.system.updateSchedule.globalProtectDatafile.at }}</at>
+                  <action>{{ configuration.deviceconfig.system.updateSchedule.globalProtectDatafile.action }}</action>
+                </daily>
+              </recurring>"
+
+- name: Configure update schedule (wildfire) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/update-schedule/wildfire"
+    element: "<recurring>
+                <every-min>
+                  <action>{{ configuration.deviceconfig.system.updateSchedule.wildfire.action }}</action>
+                </every-min>
+              </recurring>"
+
+- name: Configure update schedule (antivirus) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/update-schedule/anti-virus"
+    element: "<recurring>
+                <hourly>
+                  <at>{{ configuration.deviceconfig.system.updateSchedule.antivirus.at }}</at>
+                  <action>{{ configuration.deviceconfig.system.updateSchedule.antivirus.action }}</action>
+                </hourly>
+                <threshold>{{ configuration.deviceconfig.system.updateSchedule.antivirus.threshold }}</threshold>
+              </recurring>"

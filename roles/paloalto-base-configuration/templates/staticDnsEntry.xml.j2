@@ -1,0 +1,6 @@
+<address>
+{% for ipAddress in item.ipAddresses %}
+  <member>{{ ipAddress }}</member>
+{% endfor %}
+</address>
+<domain>{{ item.fqdn }}</domain>

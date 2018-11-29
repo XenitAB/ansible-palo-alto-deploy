@@ -1,0 +1,18 @@
+- name: Clear device configuration (management) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/setting/management"
+    command: delete
+
+- name: Configure admin lockout settings for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/setting/management"
+    element: "<admin-lockout>
+                <lockout-time>{{ configuration.deviceconfig.management.adminLockoutTime }}</lockout-time>
+                <failed-attempts>{{ configuration.deviceconfig.management.adminLockoutFailedAttempts }}</failed-attempts>
+              </admin-lockout>"

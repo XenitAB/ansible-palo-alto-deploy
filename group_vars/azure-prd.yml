@@ -1,0 +1,9 @@
+location: west europe
+locationShort: we
+environment: production
+environmentShort: prd
+rgCommonName: paloalto
+vnetResourceGroupName: <Virtual Network Resource Group Name>
+vnetName: <Virtual Network Name>
+commonName: paloalto
+commonNameShort: pa

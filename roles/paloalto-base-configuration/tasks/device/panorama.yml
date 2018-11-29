@@ -1,0 +1,7 @@
+- name: Configure Panorama IP addresses
+  panos_mgtconfig:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    panorama_primary: "{{ panoramaPrimaryIp }}"
+    panorama_secondary: "{{ panoramaSecondaryIp }}"

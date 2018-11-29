@@ -1,0 +1,31 @@
+- name: Clear Zones for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/zone"
+    command: delete
+
+- name: Create Zone {{ configuration.zones.internalZone }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/zone/entry[@name='{{ configuration.zones.internalZone }}']"
+    element: "<network>
+                  <layer3>
+                      <member>{{ subnets[1].interfaceName }}</member>
+                  </layer3>
+              </network>"
+
+- name: Create Zone {{ configuration.zones.externalZone }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/zone/entry[@name='{{ configuration.zones.externalZone }}']"
+    element: "<network>
+                  <layer3>
+                      <member>{{ subnets[2].interfaceName }}</member>
+                  </layer3>
+              </network>"

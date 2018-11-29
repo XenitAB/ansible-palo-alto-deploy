@@ -1,0 +1,19 @@
+- name: Include vars from natRules.yml
+  include_vars: "natRules.yml"
+
+- name: Clear NAT rules for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/nat/rules"
+    command: delete
+
+- name: Create Source NAT Rules for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/nat/rules/entry[@name='{{ item.ruleName }}']"
+    element: "{{ lookup('template', 'sourceNatRule.xml.j2') }}"
+  loop: "{{ sourceNatRules }}"

@@ -1,0 +1,125 @@
+adminUsername: <Admin Username>
+panoramaPrimaryIp:
+panoramaSecondaryIp:
+albPublicPipCount: 4
+albPublicPorts:
+  - 80
+  - 443
+subnets:
+  - 
+    name: <Management subnet name>
+    netmask: 24
+    gateway: 10.0.1.1
+    ipAddresses:
+      - 10.0.1.6
+      - 10.0.1.7
+  -
+    name: <Trust subnet name>
+    netmask: 24
+    gateway: 10.0.2.1
+    interfaceName: ethernet1/1
+    ipAddresses:
+      - 10.0.2.4
+      - 10.0.2.5
+  -
+    name: <Untrust subnet name>
+    netmask: 24
+    gateway: 10.0.3.1
+    interfaceName: ethernet1/2
+    ipAddresses:
+      - 10.0.3.4
+      - 10.0.3.5
+albInternalIps:
+  - 10.0.2.101
+  - 10.0.2.102
+  - 10.0.2.103
+  - 10.0.2.104
+  - 10.0.2.105
+
+configuration:
+  deviceconfig:
+    system:
+      timezone: Europe/Stockholm
+      banner: Unauthorized access is prohibited!
+      latitude: '52.3680'
+      longitude: '4.9036'
+      services:
+        disableHttp: 'yes'
+        disableHttpOcsp: 'yes'
+        disableHttps: 'no'
+        disableIcmp: 'no'
+        disableSnmp: 'no'
+        disableSsh: 'no'
+        disableTelnet: 'yes'
+        disableUseridService: 'yes'
+        disableUseridSyslogListenerSsl: 'yes'
+        disableUseridSyslogListenerUdp: 'yes'
+      snmp:
+        location: Azure, West Europe
+        contact: <SNMP Contact>
+        version: V2c
+        community: <SNMP Community>
+      ntp:
+        primary: 0.se.pool.ntp.org
+        secondary: 1.se.pool.ntp.org
+      updateSchedule:
+        threats:
+          action: download-and-install
+          threshold: 4
+        globalProtectClientlessVpn:
+          action: download-and-install
+          at: 02:00
+        globalProtectDatafile:
+          action: download-and-install
+          at: 01:00
+        wildfire:
+          action: download-and-install
+        antivirus:
+          at: 15
+          action: download-and-install
+          threshold: 4
+    management:
+      adminLockoutTime: 5
+      adminLockoutFailedAttempts: 5
+  dnsProxy:
+    name: dnsproxy-default
+    primary: 168.63.129.16
+    secondary: 168.63.129.16
+    cacheEnabled: 'yes'
+    cacheMaxTtlEnabled: 'yes'
+    cacheMaxTtl: 3600
+    tcpQueriesEnabled: 'yes'
+  interfaceManagementProfile:
+    name: intmgtprofile-default
+    httpOcsp: 'yes'
+    ping: 'yes'
+    http: 'no'
+    https: 'no'
+    ssh: 'no'
+    snmp: 'no'
+    useridService: 'no'
+    useridSyslogListenerSsl: 'no'
+    useridSyslogListenerUdp: 'no'
+    responsePages: 'no'
+    telnet: 'no'
+  virtualRouters:
+    internalRouter: vr-internal
+    externalRouter: vr-external
+    bgpEnabled: 'no'
+    bgpGracefulRestart: 'yes'
+    ripEnabled: 'no'
+    ospfEnabled: 'no'
+    ospfv3Enabled: 'no'
+  zones:
+    internalZone: trust
+    externalZone: untrust
+  logForwarding:
+    name: logfwd-default
+    description: Default log forwarding profile
+  securityProfileGroup:
+    name: secprofgroup-default
+    virusProfile: default
+    spywareProfile: default
+    vulnerabilityProfile: default
+    urlFilteringProfile: default
+    wildfireAnalysisProfile: default

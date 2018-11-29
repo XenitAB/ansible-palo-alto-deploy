@@ -1,0 +1,29 @@
+- name: Clear Security Profile Groups for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/profile-group"
+    command: delete
+
+- name: Create Security Profile Group {{ configuration.securityProfileGroup.name }} for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/profile-group/entry[@name='{{ configuration.securityProfileGroup.name }}']"
+    element: "<virus>
+                <member>{{ configuration.securityProfileGroup.virusProfile }}</member>
+              </virus>
+              <spyware>
+                <member>{{ configuration.securityProfileGroup.spywareProfile }}</member>
+              </spyware>
+              <vulnerability>
+                <member>{{ configuration.securityProfileGroup.vulnerabilityProfile }}</member>
+              </vulnerability>
+              <url-filtering>
+                <member>{{ configuration.securityProfileGroup.urlFilteringProfile }}</member>
+              </url-filtering>
+              <wildfire-analysis>
+                <member>{{ configuration.securityProfileGroup.wildfireAnalysisProfile }}</member>
+              </wildfire-analysis>"

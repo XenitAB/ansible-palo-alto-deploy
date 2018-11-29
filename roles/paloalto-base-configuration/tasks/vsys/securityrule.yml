@@ -1,0 +1,38 @@
+- name: Include vars from securityRules.yml
+  include_vars: "securityRules.yml"
+
+- name: Clear security rules for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules"
+    command: delete
+
+- name: Clear default security rules for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/default-security-rules/rules"
+    command: delete
+
+- name: Override default Security Rule (interzone-default) for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/default-security-rules/rules/entry[@name='interzone-default']"
+    element: "<action>deny</action>
+              <log-start>no</log-start>
+              <log-end>yes</log-end>
+              <log-setting>{{ configuration.logForwarding.name }}</log-setting>"
+
+- name: Create Security Rules for {{ mainItem }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules/entry[@name='{{ item.ruleName }}']"
+    element: "{{ lookup('template', 'securityRule.xml.j2') }}"
+  loop: "{{ securityRules }}"

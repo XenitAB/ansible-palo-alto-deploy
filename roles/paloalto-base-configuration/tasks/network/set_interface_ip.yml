@@ -1,0 +1,7 @@
+- name: Set interface IP for {{ mainItem }} {{ interfaceName }} {{ ipAddress }}
+  panos_set:
+    ip_address: "{{ mainItem }}"
+    username: "{{ adminUsername }}"
+    password: "{{ adminPassword }}"
+    xpath: "/config/devices/entry[@name='localhost.localdomain']/network/interface/ethernet/entry[@name='{{ interfaceName }}']/layer3/ip"
+    element: "<entry name='{{ ipAddress }}'/>"

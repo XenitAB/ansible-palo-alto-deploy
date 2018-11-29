@@ -1,0 +1,12 @@
+- hosts: azure
+  roles:
+    - azure-deploy-paloalto
+  environment:
+    AZURE_CLIENT_ID: "{{ AZURE_CLIENT_ID }}"
+    AZURE_SECRET: "{{ AZURE_SECRET }}"
+    AZURE_SUBSCRIPTION_ID: "{{ AZURE_SUBSCRIPTION_ID }}"
+    AZURE_TENANT: "{{ AZURE_TENANT }}"
+
+- hosts: paloalto
+  roles:
+    - paloalto-base-configuration
